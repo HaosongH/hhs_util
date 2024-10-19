@@ -1,6 +1,8 @@
 import os
 import shutil
 from base_operation import *
+from image_transform_util import *
+from yaml_util import *
 # --------------------------------------file and directory utility ------------------------------------------
 # Get all files in the folder
 def get_all_files(folder_path):
@@ -23,14 +25,17 @@ def get_all_folders(folder_path):
 
 # get basename of the path, with or without extension
 # For example, C:/aaa/b.jpg will return b.jpg or b
-def get_base_name(path):
+def get_base_name_withoutext(path):
     return os.path.basename(path).split(".")[0]
 
-def get_base_name(path, ext):
-    if ext:
-        return os.path.basename(path)
-    else: 
-        return os.path.basename(path).split(".")[0]
+def get_base_name_ext(path):
+    return os.path.basename(path)
+
+def get_filename(path):
+    return os.path.basename(path)
+
+def get_ext(path):
+    return os.path.basename(path).split(".")[1]
 
 # Return all files in the directory with a specific extension
 def generate_file_list(dir, end):
@@ -54,7 +59,7 @@ def copy_files_ext(source_dir, target_dir, file_ext_list):
     for case_num_path in subfolders:
         path = os.path.join(case_num_path,"results")
         files = get_all_files(path)
-        case_num = get_base_name(case_num_path)
+        case_num = get_base_name_withoutext(case_num_path)
         for file in files:
             # Check for .hdr or .dat files
             if file.endswith(file_ext_list):
@@ -65,3 +70,47 @@ def copy_files_ext(source_dir, target_dir, file_ext_list):
                 shutil.copy2(src_file, dst_file)
                 print(f"Copied: {src_file} -> {dst_file}")
 
+# Extract prefix of a file, so D:/abc_def.png -> abc.png
+def get_filename_prefix(filename, op , includeExt = 0):
+    filename = get_base_name_ext(filename)
+    prefix = filename.split(op,1)[0]
+    ext = os.path.splitext(filename)[1]
+    if includeExt:
+        return prefix+ext
+    else:
+        return prefix
+
+# Extract prefix of a file, so D:/abc_def.png -> abc.png
+def get_filename_suffix(filename, op , includeExt = 0):
+    filename = get_base_name_ext(filename)
+    front, ext = os.path.splitext(filename)
+    suffix = filename.split(op,1)[-1]
+    if includeExt:
+        return suffix+ext
+    else:
+        return suffix
+
+def getModifiedPath(path, newDir, newExt):
+    basename = get_base_name_withoutext(path)
+    return newDir+"/" + basename + "." + newExt
+
+def removeExt(path):
+    return os.path.basename(path).split(".")[0]
+
+# cv2.IMREAD_GRAYSCALE
+# cv2.IMREAD_COLOR
+def cv_read(path, mode, rgb = 1):
+    # Read the file in binary mode
+    with open(path, 'rb') as f:
+        image_bytes = f.read()
+    # Convert the binary data into a NumPy array
+    image_array = np.frombuffer(image_bytes, np.uint8)
+    # Decode the image
+    image = cv2.imdecode(image_array, mode)
+    if mode == cv2.IMREAD_COLOR and rgb:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image    
+
+def cv_write(path, image):
+    output_ext = get_ext(path)            
+    cv2.imencode("."+output_ext, image)[1].tofile(path)

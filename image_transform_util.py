@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 
+
+    
 def log_transform(image):
     # Convert the image to float32 for more precision
     img_float = np.float32(image)
@@ -136,3 +138,7 @@ def snv(input_data):
 def clip_image(arr):
     arr = np.clip(arr, 0.01, 254.99)
     return np.uint8(arr)
+
+def map_darray_by_dict(arr, dict):
+    color_lookup = np.array([dict[i] for i in range(len(dict))], dtype=np.uint8)
+    return color_lookup[arr]
